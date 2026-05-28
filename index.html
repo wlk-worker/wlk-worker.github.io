@@ -3,463 +3,876 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智障检测系统 v6.6.6</title>
+<title>任意门 · 下一站去哪里？</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: #0a0a0a;
-    color: #0f0;
-    font-family: "Courier New", monospace;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+:root {
+  --cream: #FFF8E7;
+  --pink: #F4A7B9;
+  --pink-deep: #E893A6;
+  --pink-dark: #D47A8E;
+  --brown: #5D4037;
+  --brown-light: #8D6E63;
+  --gold: #F9C74F;
+  --gold-dark: #E6B33D;
+  --mint: #7EC8A0;
+  --mint-dark: #5DAF82;
+  --white: #FFFBf0;
+  --door-w: 280px;
+  --door-h: 420px;
+  --door-border: 14px;
+}
+
+body {
+  font-family: 'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--cream);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(circle at 15% 20%, #FFF3D6 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, #FFE8E0 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, #FFF8E7 0%, transparent 70%);
+}
+
+/* ── floating decorations ── */
+.deco {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 6s ease-in-out infinite;
+}
+.deco:nth-child(2) { animation-delay: -2s; animation-duration: 7s; }
+.deco:nth-child(3) { animation-delay: -4s; animation-duration: 5.5s; }
+.deco:nth-child(4) { animation-delay: -1s; animation-duration: 8s; }
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-18px) rotate(3deg); }
+  66% { transform: translateY(10px) rotate(-2deg); }
+}
+
+/* ── main container ── */
+.container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+/* ── floor ── */
+.floor {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 22%;
+  background: linear-gradient(180deg, #F5E6D3 0%, #EDD7C1 30%, #E0C9AD 100%);
+  z-index: 0;
+  border-top: 3px dashed #D4B896;
+}
+.floor::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 10%; right: 10%;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #D4B896 0px, #D4B896 40px, transparent 40px, transparent 80px);
+}
+
+/* ── title ── */
+.title {
+  font-size: 2rem;
+  color: var(--brown);
+  letter-spacing: 0.08em;
+  text-shadow: 2px 2px 0 rgba(244,167,185,0.3);
+  text-align: center;
+  line-height: 1.5;
+}
+.title .dorayaki {
+  display: inline-block;
+  animation: bounce-dorayaki 1.2s ease-in-out infinite;
+}
+@keyframes bounce-dorayaki {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ── portal scene ── */
+.portal-scene {
+  perspective: 900px;
+  perspective-origin: center center;
+  width: calc(var(--door-w) + var(--door-border) * 2 + 20px);
+  height: calc(var(--door-h) + var(--door-border) * 2 + 10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portal-stage {
+  position: relative;
+  width: calc(var(--door-w) + var(--door-border) * 2);
+  height: calc(var(--door-h) + var(--door-border) * 2);
+  transform-style: preserve-3d;
+}
+
+/* ── door frame (static outer) ── */
+.door-frame {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #F8C5D0 0%, #F0A0B5 40%, #E893A6 100%);
+  border-radius: 20px 20px 16px 16px;
+  box-shadow:
+    inset 0 2px 8px rgba(255,255,255,0.4),
+    inset 0 -4px 12px rgba(0,0,0,0.08),
+    0 8px 30px rgba(180,120,130,0.35),
+    4px 6px 0 rgba(210,130,145,0.5);
+  border: 3px solid #D47A8E;
+}
+
+/* ── doorway (opening, revealed when door opens) ── */
+.doorway {
+  position: absolute;
+  inset: var(--door-border);
+  background: radial-gradient(ellipse at center, #FFF3D6 0%, #FFE8C0 30%, #F5D5A0 60%, #E8C080 100%);
+  border-radius: 8px 8px 4px 4px;
+  overflow: hidden;
+  z-index: 1;
+}
+/* portal vortex inside doorway */
+.doorway::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg, rgba(255,255,255,0.5) 30deg,
+    rgba(249,199,79,0.4) 60deg, transparent 90deg,
+    transparent 180deg, rgba(255,255,255,0.4) 210deg,
+    rgba(249,199,79,0.3) 240deg, transparent 270deg,
+    transparent 360deg
+  );
+  animation: vortex-spin 8s linear infinite;
+}
+@keyframes vortex-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── door leaf (the actual door that swings open) ── */
+.door-leaf {
+  position: absolute;
+  inset: var(--door-border);
+  background: linear-gradient(175deg, #FCD0DA 0%, #F4A7B9 30%, #EC96AA 60%, #E893A6 100%);
+  border-radius: 8px 8px 4px 4px;
+  z-index: 10;
+  transform-origin: left center;
+  transform: rotateY(0deg);
+  transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    inset 2px 0 12px rgba(255,255,255,0.35),
+    inset -3px 0 10px rgba(0,0,0,0.06),
+    2px 0 12px rgba(0,0,0,0.1);
+  cursor: default;
+}
+.door-leaf.open {
+  transform: rotateY(-118deg);
+  transition: transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.door-leaf.closing {
+  transform: rotateY(0deg);
+  transition: transform 0.55s cubic-bezier(0.6, 0, 0.8, 1);
+}
+
+/* door panels (decorative inset rectangles) */
+.door-panel {
+  position: absolute;
+  left: 14px; right: 14px;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.08);
+}
+.door-panel.top { top: 22px; height: 120px; }
+.door-panel.bottom { bottom: 50px; height: 160px; }
+
+/* round window */
+.door-window {
+  position: absolute;
+  top: 50px; left: 50%;
+  transform: translateX(-50%);
+  width: 78px; height: 78px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #FFFEF9 0%, #E8E0D0 40%, #D4C8B0 100%);
+  border: 4px solid #D47A8E;
+  box-shadow:
+    inset 0 2px 8px rgba(255,255,255,0.7),
+    inset 0 -2px 4px rgba(0,0,0,0.08),
+    0 0 0 3px rgba(255,255,255,0.25);
+  z-index: 2;
+}
+.door-window::after {
+  content: '';
+  position: absolute;
+  top: 12%; left: 22%;
+  width: 22px; height: 10px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 50%;
+  transform: rotate(-20deg);
+}
+
+/* door knob */
+.door-knob {
+  position: absolute;
+  right: 18px; top: 50%;
+  transform: translateY(-50%);
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #FFE680 0%, #F9C74F 50%, #D4A030 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 0 0 3px rgba(180,120,0,0.15);
+  z-index: 3;
+}
+
+/* ── destination card (inside doorway) ── */
+.destination-card {
+  position: absolute;
+  inset: 18px;
+  z-index: 2;
+  background: var(--white);
+  border-radius: 10px;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  opacity: 0;
+  transform: scale(0.3) translateZ(-20px);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  border: 2px solid #F0E0D0;
+  overflow-y: auto;
+}
+.destination-card.visible {
+  opacity: 1;
+  transform: scale(1) translateZ(0);
+  pointer-events: auto;
+}
+.destination-card.hiding {
+  opacity: 0;
+  transform: scale(0.6) translateZ(-30px);
+  transition: all 0.3s ease-in;
+}
+
+.card-emoji {
+  font-size: 2.8rem;
+  line-height: 1;
+  animation: emoji-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes emoji-pop {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.card-name {
+  font-size: 1.5rem;
+  color: var(--brown);
+  letter-spacing: 0.05em;
+}
+.card-province {
+  font-size: 0.85rem;
+  color: var(--brown-light);
+  background: #FFF3D6;
+  padding: 2px 12px;
+  border-radius: 20px;
+}
+.card-season {
+  font-size: 0.82rem;
+  color: var(--mint-dark);
+}
+.card-desc {
+  font-size: 0.9rem;
+  color: var(--brown);
+  line-height: 1.5;
+  margin-top: 2px;
+  font-style: italic;
+}
+.card-tip {
+  font-size: 0.78rem;
+  color: var(--brown-light);
+  background: #FFF9E6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-top: 4px;
+  border: 1px dashed #E8D5B0;
+}
+.card-tip::before { content: '💡 '; }
+
+/* ── buttons ── */
+.btn-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  z-index: 2;
+}
+
+.btn {
+  font-family: 'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.15rem;
+  padding: 14px 36px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.25s ease;
+  position: relative;
+  outline: none;
+}
+.btn:active { transform: scale(0.94); }
+
+.btn-random {
+  background: var(--pink);
+  color: white;
+  box-shadow:
+    0 6px 0 var(--pink-dark),
+    0 8px 20px rgba(232,147,166,0.4);
+  border: 2px solid var(--pink-deep);
+}
+.btn-random:hover {
+  background: #F8B8C8;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 0 var(--pink-dark),
+    0 12px 25px rgba(232,147,166,0.5);
+}
+.btn-random:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 3px 0 var(--pink-dark),
+    0 4px 10px rgba(232,147,166,0.3);
+}
+
+.btn-confirm {
+  background: var(--mint);
+  color: white;
+  box-shadow:
+    0 6px 0 var(--mint-dark),
+    0 8px 20px rgba(126,200,160,0.35);
+  border: 2px solid var(--mint-dark);
+  display: none;
+}
+.btn-confirm:hover {
+  background: #8FD4AC;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 0 var(--mint-dark),
+    0 12px 25px rgba(126,200,160,0.45);
+}
+.btn-confirm:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 3px 0 var(--mint-dark),
+    0 4px 10px rgba(126,200,160,0.25);
+}
+
+/* ── encouragement ── */
+.encouragement {
+  font-size: 1rem;
+  color: var(--brown-light);
+  text-align: center;
+  min-height: 28px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.5s ease;
+  max-width: 340px;
+  line-height: 1.6;
+}
+.encouragement.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── blessing overlay ── */
+.blessing-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255,248,231,0.95);
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 30px;
+  text-align: center;
+}
+.blessing-overlay.show {
+  display: flex;
+  animation: fade-in 0.5s ease;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.blessing-emoji {
+  font-size: 4rem;
+  animation: emoji-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.blessing-title {
+  font-size: 2rem;
+  color: var(--brown);
+}
+.blessing-text {
+  font-size: 1.1rem;
+  color: var(--brown-light);
+  max-width: 400px;
+  line-height: 1.8;
+}
+.blessing-dest {
+  font-size: 1.4rem;
+  color: var(--pink-deep);
+  background: #FFF0F3;
+  padding: 8px 24px;
+  border-radius: 30px;
+  border: 2px dashed var(--pink);
+}
+.btn-restart {
+  font-family: 'ZCOOL KuaiLe', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1rem;
+  padding: 12px 30px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  background: var(--gold);
+  color: var(--brown);
+  box-shadow: 0 4px 0 var(--gold-dark), 0 6px 15px rgba(249,199,79,0.4);
+  border: 2px solid var(--gold-dark);
+  transition: all 0.2s ease;
+}
+.btn-restart:hover { transform: translateY(-2px); }
+.btn-restart:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--gold-dark); }
+
+/* ── sparkles ── */
+.sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 50;
+  font-size: 1.2rem;
+  animation: sparkle-fly 1.2s ease-out forwards;
+}
+@keyframes sparkle-fly {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+}
+
+/* ── responsive ── */
+@media (max-width: 600px) {
+  :root {
+    --door-w: 200px;
+    --door-h: 310px;
+    --door-border: 10px;
   }
-
-  /* 背景闪烁的假终端效果 */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0,0,0,0.15) 0px,
-      rgba(0,0,0,0.15) 2px,
-      transparent 2px,
-      transparent 4px
-    );
-    pointer-events: none;
-    z-index: 999;
-  }
-
-  .container {
-    background: #111;
-    border: 2px solid #0f0;
-    border-radius: 8px;
-    padding: 40px 30px;
-    width: 460px;
-    max-width: 95vw;
-    box-shadow: 0 0 40px rgba(0,255,0,0.15), inset 0 0 20px rgba(0,255,0,0.05);
-    position: relative;
-    z-index: 1;
-  }
-
-  .scanline {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: rgba(0,255,0,0.3);
-    animation: scan 3s linear infinite;
-    pointer-events: none;
-  }
-
-  @keyframes scan {
-    0% { top: 0; }
-    100% { top: 100%; }
-  }
-
-  h1 {
-    text-align: center;
-    font-size: 22px;
-    letter-spacing: 4px;
-    margin-bottom: 6px;
-    text-shadow: 0 0 10px #0f0;
-  }
-
-  .subtitle {
-    text-align: center;
-    font-size: 11px;
-    color: #0a0;
-    margin-bottom: 28px;
-    letter-spacing: 2px;
-  }
-
-  .input-group {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  input {
-    flex: 1;
-    background: #000;
-    border: 1px solid #0f0;
-    color: #0f0;
-    padding: 10px 14px;
-    font-family: inherit;
-    font-size: 16px;
-    outline: none;
-    border-radius: 4px;
-  }
-
-  input:focus {
-    box-shadow: 0 0 12px rgba(0,255,0,0.3);
-  }
-
-  input::placeholder {
-    color: #063;
-  }
-
-  button {
-    background: #0f0;
-    color: #000;
-    border: none;
-    padding: 10px 18px;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-    letter-spacing: 1px;
-    transition: all 0.2s;
-  }
-
-  button:hover {
-    background: #0c0;
-    box-shadow: 0 0 16px #0f0;
-  }
-
-  button:disabled {
-    background: #333;
-    color: #666;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-
-  .result-area {
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .progress-wrap {
-    width: 100%;
-    margin-bottom: 16px;
-  }
-
-  .progress-bar {
-    width: 100%;
-    height: 24px;
-    background: #000;
-    border: 1px solid #0f0;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #0f0, #ff0, #f00);
-    transition: width 0.08s linear;
-    border-radius: 2px;
-  }
-
-  .status-text {
-    font-size: 13px;
-    color: #0a0;
-    margin-top: 6px;
-    min-height: 18px;
-    animation: blink 0.8s step-end infinite;
-  }
-
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
-
-  .result-card {
-    text-align: center;
-    padding: 20px;
-    border: 1px dashed #0f0;
-    border-radius: 6px;
-    background: rgba(0,255,0,0.03);
-    width: 100%;
-  }
-
-  .big-number {
-    font-size: 64px;
-    font-weight: bold;
-    text-shadow: 0 0 20px #f00;
-    line-height: 1;
-  }
-
-  .big-number.high { color: #f33; text-shadow: 0 0 24px #f00; }
-  .big-number.mid { color: #ff3; text-shadow: 0 0 24px #ff0; }
-  .big-number.low { color: #3f3; text-shadow: 0 0 24px #0f0; }
-
-  .verdict {
-    font-size: 14px;
-    margin-top: 8px;
-    letter-spacing: 2px;
-    color: #0a0;
-  }
-
-  .special-msg {
-    font-size: 20px;
-    color: #f55;
-    text-shadow: 0 0 14px #f00;
-    text-align: center;
-    letter-spacing: 2px;
-    line-height: 1.6;
-  }
-
-  .glitch {
-    animation: glitch 0.3s ease-in-out;
-  }
-
-  @keyframes glitch {
-    0%   { transform: translate(0); }
-    20%  { transform: translate(-3px, 2px); }
-    40%  { transform: translate(3px, -2px); }
-    60%  { transform: translate(-2px, -1px); }
-    80%  { transform: translate(2px, 1px); }
-    100% { transform: translate(0); }
-  }
-
-  .footer {
-    text-align: center;
-    font-size: 8px;
-    color: #063;
-    margin-top: 24px;
-    letter-spacing: 1px;
-  }
+  .title { font-size: 1.4rem; }
+  .btn { font-size: 1rem; padding: 12px 28px; }
+  .destination-card { padding: 14px 10px; gap: 4px; }
+  .card-emoji { font-size: 2rem; }
+  .card-name { font-size: 1.2rem; }
+  .card-desc { font-size: 0.8rem; }
+  .card-tip { font-size: 0.72rem; }
+  .door-window { width: 56px; height: 56px; top: 38px; }
+  .door-panel.top { height: 80px; }
+  .door-panel.bottom { height: 110px; bottom: 38px; }
+  .door-knob { width: 14px; height: 14px; right: 12px; }
+}
 </style>
 </head>
 <body>
+
+<!-- floating decorations -->
+<div class="deco" style="top:8%;left:6%;font-size:2.2rem;">☁️</div>
+<div class="deco" style="top:14%;right:8%;font-size:1.6rem;">⭐</div>
+<div class="deco" style="top:55%;left:5%;font-size:1.8rem;">🌸</div>
+<div class="deco" style="top:65%;right:6%;font-size:2rem;">☁️</div>
+
+<div class="floor"></div>
+
 <div class="container">
-  <div class="scanline"></div>
-
-  <h1>🧠 智障检测系统</h1>
-  <div class="subtitle">INTELLIGENCE DEFECT DETECTOR v6.6.6</div>
-
-  <div class="input-group">
-    <input type="text" id="nameInput" placeholder="请输入受检者姓名..." autofocus>
-    <button id="detectBtn" onclick="startDetect()">检 测</button>
+  <div class="title">
+    <span class="dorayaki">🚪</span> 任意门 · 下一站去哪儿？
   </div>
 
-  <div class="result-area" id="resultArea"></div>
-
-  <div class="footer">
-    ※ 本系统已通过ISO-250权威认证 | 准确率高达 102.7% | 检测结果不接受反驳
+  <!-- PORTAL SCENE -->
+  <div class="portal-scene">
+    <div class="portal-stage">
+      <!-- door frame (static outer) -->
+      <div class="door-frame"></div>
+      <!-- doorway opening -->
+      <div class="doorway">
+        <!-- destination card lives here -->
+        <div class="destination-card" id="destCard">
+          <span class="card-emoji" id="cardEmoji"></span>
+          <span class="card-name" id="cardName"></span>
+          <span class="card-province" id="cardProvince"></span>
+          <span class="card-season" id="cardSeason"></span>
+          <p class="card-desc" id="cardDesc"></p>
+          <div class="card-tip" id="cardTip"></div>
+        </div>
+      </div>
+      <!-- door leaf (swings open) -->
+      <div class="door-leaf" id="doorLeaf">
+        <div class="door-panel top"></div>
+        <div class="door-window"></div>
+        <div class="door-panel bottom"></div>
+        <div class="door-knob"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- buttons -->
+  <div class="btn-group">
+    <button class="btn btn-random" id="btnRandom" onclick="openDoor()">✨ 开启穿越</button>
+    <button class="btn btn-confirm" id="btnConfirm" onclick="lockItIn()">🎯 就这里了！</button>
+  </div>
+
+  <!-- encouragement -->
+  <div class="encouragement" id="encouragement"></div>
+</div>
+
+<!-- blessing overlay -->
+<div class="blessing-overlay" id="blessingOverlay">
+  <div class="blessing-emoji">🎒</div>
+  <div class="blessing-title">出发吧！</div>
+  <div class="blessing-dest" id="blessingDest"></div>
+  <p class="blessing-text" id="blessingText"></p>
+  <button class="btn-restart" onclick="startOver()">🔄 再开一次门</button>
 </div>
 
 <script>
-const input = document.getElementById('nameInput');
-const btn = document.getElementById('detectBtn');
-const resultArea = document.getElementById('resultArea');
+// ═══════════════════════════════════════
+//  DESTINATION DATABASE (80+ spots)
+// ═══════════════════════════════════════
+const destinations = [
+  // ── 华北 ──
+  { name:"故宫", province:"北京", season:"春 4-5月 / 秋 9-10月", emoji:"🏯", desc:"六百年风云变幻，红墙黄瓦间藏着半部中国史。", tip:"提前7天官网预约，周一闭馆，带好身份证~" },
+  { name:"八达岭长城", province:"北京", season:"春 4-5月 / 秋 9-10月", emoji:"🏔️", desc:"不到长城非好汉，蜿蜒万里如巨龙盘踞山脊。", tip:"避开节假日高峰，建议坐S2线小火车前往" },
+  { name:"天坛", province:"北京", season:"春 4-5月 / 秋 9-10月", emoji:"⛩️", desc:"古人对话苍天之地，回音壁前轻语千年的秘密。", tip:"早点去能看到大爷大妈踢毽子、唱京剧" },
+  { name:"颐和园", province:"北京", season:"春 4-5月 / 秋 9-10月", emoji:"🛶", desc:"皇家园林的巅峰之作，昆明湖上泛舟如入画中。", tip:"十七孔桥的日落金光穿洞，冬至前后最震撼" },
+  { name:"平遥古城", province:"山西晋中", season:"春 4-5月 / 秋 9-10月", emoji:"🏘️", desc:"时光在这里停驻了两千七百年，青砖灰瓦诉说着晋商传奇。", tip:"住在古城客栈里体验一晚土炕，尝尝碗托和栲栳栳" },
+  { name:"云冈石窟", province:"山西大同", season:"夏 6-8月 / 秋 9月", emoji:"🗿", desc:"北魏工匠在崖壁上刻下的信仰，微笑千年的佛陀凝望众生。", tip:"第20窟的露天大佛是最佳拍照位" },
+  { name:"五台山", province:"山西忻州", season:"夏 6-8月", emoji:"🏯", desc:"文殊菩萨的道场，清凉世界，梵音缭绕洗涤心灵。", tip:"五爷庙香火最旺，记得许愿要还愿哦" },
+  { name:"呼伦贝尔草原", province:"内蒙古", season:"夏 7-8月", emoji:"🐴", desc:"天苍苍野茫茫，风吹草低见牛羊，一望无际的绿色海洋。", tip:"参加那达慕大会，骑马射箭喝马奶酒" },
+  { name:"响沙湾", province:"内蒙古鄂尔多斯", season:"夏 6-8月 / 秋 9月", emoji:"🐫", desc:"会唱歌的沙漠，滑沙而下时沙鸣如雷，天地间只剩金黄。", tip:"带好墨镜和面巾，细沙无孔不入" },
+  { name:"承德避暑山庄", province:"河北承德", season:"夏 6-8月", emoji:"🏞️", desc:"清代帝王的夏宫，集南北园林之精华于一园。", tip:"外八庙也值得一看，小布达拉宫就在旁边" },
 
-// 智障评语库
-const verdicts = {
-  ultraLow: [
-    "恭喜！你的智障度极低，基本属于正常人范畴。",
-    "检测结果令人欣慰，你大概是个假智障。",
-    "不可思议！你居然是个正常人，系统表示很失望。",
-    "智障指数极低，建议你换个圈子混。",
-  ],
-  low: [
-    "轻微智障，偶尔犯傻，尚可抢救。",
-    "智障度偏高一点点，但还不是没救。",
-    "属于'间歇性智障'，发作频率：每天三次。",
-    "轻度智障，建议少刷短视频。",
-  ],
-  mid: [
-    "中度智障，走在路上会被猫鄙视的那种。",
-    "智障程度令人担忧，建议随身携带脑残片。",
-    "你的智力水平相当于一块受潮的饼干。",
-    "中度智障，说话前请三思，虽然你也想不明白。",
-  ],
-  high: [
-    "重度智障！！！你的脑子大概忘在娘胎里了。",
-    "检测仪差点爆表，你刷新了本系统的最低纪录。",
-    "恭喜打破智障榜单纪录！前无古人后无来者。",
-    "严重智障，建议立刻停止思考，你的神经元在集体辞职。",
-  ],
-  max: [
-    "你的智障度已经突破天际，系统建议你重新投胎。",
-    "100% 纯天然无添加智障！世界奇观级别。",
-    "爆表了爆表了！！检测仪冒烟了，你赔我设备！",
-    "这是人类吗？系统怀疑你是一根萝卜伪装成的。",
-  ],
-};
+  // ── 东北 ──
+  { name:"冰雪大世界", province:"黑龙江哈尔滨", season:"冬 12-2月", emoji:"❄️", desc:"用冰雪砌成的童话王国，夜幕下晶莹剔透如梦境。", tip:"穿两层袜子贴暖宝宝，手机容易冻关机" },
+  { name:"漠河北极村", province:"黑龙江漠河", season:"夏 6-8月(极光) / 冬 12-2月(雪景)", emoji:"🌌", desc:"中国最北端的小村庄，运气好能看到梦幻的极光。", tip:"在最北邮局给朋友寄一张明信片吧" },
+  { name:"长白山天池", province:"吉林", season:"夏 7-8月 / 冬 1-2月", emoji:"🏔️", desc:"十六座山峰环抱一池碧水，云开雾散时美到窒息。", tip:"天池不是每次都能看到，放平心态随缘" },
+  { name:"沈阳故宫", province:"辽宁沈阳", season:"春 4-5月 / 秋 9-10月", emoji:"🏯", desc:"大清入关前的皇宫，满族建筑的独特韵味。", tip:"比北京故宫小但人少很多，逛起来很舒服" },
+  { name:"雾凇岛", province:"吉林吉林市", season:"冬 12-2月", emoji:"🌫️", desc:"松花江畔的玉树琼花，非冰非雪，是清晨雾气凝结的奇迹。", tip:"最好前一天晚上住岛上，清晨六点是观赏最佳时机" },
 
-const loadingMessages = [
-  "正在扫描脑细胞...",
-  "正在连接人工智能智障分析云...",
-  "正在分析智商残留量...",
-  "正在对比全球智障数据库...",
-  "正在解码神经元放电模式...",
-  "正在排除'故意装傻'干扰项...",
-  "正在计算脑回路短路概率...",
-  "结果马上出来，别急，越急越智障...",
+  // ── 西北 ──
+  { name:"兵马俑", province:"陕西西安", season:"全年皆宜", emoji:"🗿", desc:"八千陶俑静立千年，每个人的面孔都不相同，守护着秦始皇的帝国梦。", tip:"请个讲解员能听到很多有趣的故事，自己看会错过" },
+  { name:"华山", province:"陕西华阴", season:"春 4-5月 / 秋 9-10月", emoji:"⛰️", desc:"奇险天下第一山，长空栈道上一步一景，一步一惊心。", tip:"夜爬华山看日出是经典玩法，带好头灯和手套" },
+  { name:"敦煌莫高窟", province:"甘肃敦煌", season:"春 5-6月 / 秋 9-10月", emoji:"🏛️", desc:"大漠中的艺术宝库，壁画上的飞天穿越千年依旧翩然起舞。", tip:"A类票需提前一个月预约，看8个窟+数字电影" },
+  { name:"鸣沙山月牙泉", province:"甘肃敦煌", season:"夏 6-8月 / 秋 9月", emoji:"🐪", desc:"沙不填泉、泉不枯竭，沙漠中的一弯新月是千年的奇迹。", tip:"骑骆驼上山看日落，穿红裙子拍照绝美" },
+  { name:"张掖丹霞", province:"甘肃张掖", season:"夏 6-8月 / 秋 9月", emoji:"🌈", desc:"上帝在这里打翻了调色盘，红黄橙绿的山峦像波浪般起伏。", tip:"雨后天晴时颜色最鲜艳，日落时分光影最佳" },
+  { name:"青海湖", province:"青海", season:"夏 7-8月", emoji:"🌊", desc:"高原上的蓝宝石，油菜花盛开的季节水天一色美如画。", tip:"环湖骑行是最佳体验方式，全程约360公里" },
+  { name:"茶卡盐湖", province:"青海海西", season:"夏 6-8月", emoji:"🪞", desc:"中国的天空之镜，站在盐湖中央如同行走在云端。", tip:"穿鲜艳的衣服拍照最好看，下水要租鞋套" },
+  { name:"喀纳斯", province:"新疆阿勒泰", season:"秋 9-10月", emoji:"🏞️", desc:"上帝的后花园，秋天的喀纳斯层林尽染如打翻的油画。", tip:"九月下旬到十月初是最美金秋，提前订住宿" },
+  { name:"天山天池", province:"新疆乌鲁木齐", season:"夏 6-8月", emoji:"🏔️", desc:"博格达峰下的高山明珠，雪山倒映在清澈的湖水中。", tip:"坐缆车上马牙山可以俯瞰天池全貌" },
+  { name:"大雁塔", province:"陕西西安", season:"全年皆宜", emoji:"🛕", desc:"玄奘西行取经归来藏经之地，千年古塔见证丝路繁华。", tip:"晚上北广场有亚洲最大的音乐喷泉表演" },
+
+  // ── 华东 ──
+  { name:"西湖", province:"浙江杭州", season:"春 3-4月 / 秋 9-10月", emoji:"🌊", desc:"欲把西湖比西子，淡妆浓抹总相宜，晴雨风雪各有其美。", tip:"租辆自行车环湖，比走路快比坐车自由" },
+  { name:"乌镇", province:"浙江桐乡", season:"春 4-5月 / 秋 9-10月", emoji:"🚣", desc:"小桥流水人家，枕水而居的江南梦境，桨声灯影里的温柔。", tip:"住西栅景区里的民宿，清晨游客还没进来时最美" },
+  { name:"黄山", province:"安徽黄山", season:"全年皆宜，四季不同景", emoji:"⛰️", desc:"五岳归来不看山，黄山归来不看岳。云海日出奇松怪石，天下无双。", tip:"山上住宿贵且难订，建议提前两个月安排" },
+  { name:"宏村", province:"安徽黟县", season:"春 3-4月 / 秋 10-11月", emoji:"🏡", desc:"画里的村庄，月沼倒映着白墙黛瓦马头墙，水墨江南的极致。", tip:"清晨六点的月沼没有游客，是拍照的黄金时间" },
+  { name:"苏州园林", province:"江苏苏州", season:"春 3-5月 / 秋 9-10月", emoji:"🏯", desc:"咫尺之内再造乾坤，一步一景，方寸之间自有天地。", tip:"拙政园和留园是精华，网师园的夜游也别有风味" },
+  { name:"周庄", province:"江苏昆山", season:"春 4-5月 / 秋 9-10月", emoji:"🚣", desc:"中国第一水乡，沈万三的故乡，双桥下的倒影摇曳了千年。", tip:"一定要坐手摇船听船娘唱江南小调" },
+  { name:"鼓浪屿", province:"福建厦门", season:"春 3-5月 / 秋 10-11月", emoji:"🏝️", desc:"钢琴之岛，万国建筑博览，每一条小巷都藏着惊喜。", tip:"岛上没有机动车，穿舒服的鞋子慢慢走" },
+  { name:"武夷山", province:"福建南平", season:"春 4-5月 / 秋 9-10月", emoji:"🏞️", desc:"九曲溪上竹筏漂流，两岸丹霞奇峰，大红袍的故乡茶香四溢。", tip:"给船工小费会讲很多有趣的段子和故事" },
+  { name:"泰山", province:"山东泰安", season:"春 4-5月 / 秋 9-10月", emoji:"⛰️", desc:"会当凌绝顶，一览众山小。历代帝王封禅之地，登泰山而小天下。", tip:"夜爬看日出最经典，从红门出发全程约4-6小时" },
+  { name:"三孔", province:"山东曲阜", season:"春 4-5月 / 秋 9-10月", emoji:"📚", desc:"孔府孔庙孔林，儒学圣地，千年礼乐之邦的灵魂所在。", tip:"背一段论语可以免门票（开玩笑的，但值得一试）" },
+  { name:"中山陵", province:"江苏南京", season:"春 3-4月 / 秋 10-11月", emoji:"🏛️", desc:"紫金山下的庄严陵寝，392级台阶步步登高远眺金陵城。", tip:"音乐台的鸽子很亲人，带点玉米粒去喂" },
+  { name:"外滩", province:"上海", season:"春 4-5月 / 秋 9-10月", emoji:"🌃", desc:"浦西万国建筑群与浦东摩天楼隔江相望，百年上海的缩影。", tip:"坐2元轮渡从浦西到浦东，比观光隧道有趣多了" },
+  { name:"普陀山", province:"浙江舟山", season:"春 4-5月 / 秋 9-10月", emoji:"🙏", desc:"海天佛国，观音道场，潮音洞边听海浪与梵音交织。", tip:"岛上吃素斋是一种修行体验，别错过" },
+
+  // ── 华中 ──
+  { name:"张家界", province:"湖南", season:"春 4-5月 / 秋 9-10月", emoji:"🏔️", desc:"阿凡达取景地，三千奇峰拔地而起，云雾缭绕如悬浮山。", tip:"天门山要提前订票，A线和B线体验完全不同" },
+  { name:"凤凰古城", province:"湖南湘西", season:"春 3-5月 / 秋 9-10月", emoji:"🏘️", desc:"沱江边的吊脚楼，沈从文笔下的边城，夜色中的灯火温暖了千年。", tip:"清晨沱江上会有晨雾，如仙境般梦幻" },
+  { name:"岳阳楼", province:"湖南岳阳", season:"春 4-5月 / 秋 9-10月", emoji:"🏯", desc:"洞庭天下水，岳阳天下楼。先天下之忧而忧的千古名篇诞生于此。", tip:"洞庭湖的鱼席是一绝，巴陵全鱼席不容错过" },
+  { name:"武当山", province:"湖北十堰", season:"春 4-5月 / 秋 9-10月", emoji:"☯️", desc:"道教圣地，太极祖庭，紫霄宫的金顶在云雾中若隐若现。", tip:"可以报名短期太极课程，跟着道长学两招" },
+  { name:"神农架", province:"湖北", season:"夏 6-8月 / 秋 9-10月", emoji:"🌲", desc:"北纬31度的绿色奇迹，原始森林中的野人传说至今未解。", tip:"夏天去避暑绝佳，山里比山下低10度" },
+  { name:"龙门石窟", province:"河南洛阳", season:"春 4-5月 / 秋 9-10月", emoji:"🗿", desc:"伊河两岸十万佛像，卢舍那大佛的微笑比蒙娜丽莎早了八百年。", tip:"夜游龙门更震撼，佛像在灯光下格外庄严" },
+  { name:"少林寺", province:"河南登封", season:"春 4-5月 / 秋 9-10月", emoji:"🥋", desc:"天下功夫出少林，千年古刹里还能听到武僧练功的呼喝声。", tip:"看武术表演要提前到场，前排效果完全不同" },
+  { name:"云台山", province:"河南焦作", season:"夏 6-8月 / 秋 9-10月", emoji:"🏞️", desc:"红石峡的赤壁丹崖间飞瀑如练，北方山水也能如此秀丽。", tip:"红石峡是精华中的精华，不要走太快" },
+  { name:"恩施大峡谷", province:"湖北恩施", season:"春 4-5月 / 秋 9-10月", emoji:"🏔️", desc:"媲美科罗拉多大峡谷，一炷香奇石独立，绝壁长廊步步惊心。", tip:"体力消耗较大，建议坐索道上山再走下来" },
+  { name:"庐山", province:"江西九江", season:"夏 6-8月(避暑) / 秋 9-10月", emoji:"⛰️", desc:"匡庐奇秀甲天下，飞流直下三千尺的瀑布至今奔流不息。", tip:"山上有个小镇叫牯岭，被称为云中山城" },
+  { name:"婺源", province:"江西上饶", season:"春 3-4月(油菜花) / 秋 10-11月(晒秋)", emoji:"🌻", desc:"中国最美乡村，春天油菜花开满山遍野，秋天晒秋五彩缤纷。", tip:"篁岭的晒秋和江岭的油菜花梯田是最经典的画面" },
+
+  // ── 西南 ──
+  { name:"九寨沟", province:"四川阿坝", season:"秋 9-10月", emoji:"🏞️", desc:"人间仙境，童话世界，五彩池的水美得不像真的。", tip:"地震后已全面恢复开放，秋天彩林季最美" },
+  { name:"峨眉山", province:"四川乐山", season:"春 4-5月 / 秋 9-10月", emoji:"🐒", desc:"峨眉天下秀，金顶的十方普贤在云海日出中金光闪闪。", tip:"小心猴群！不要手提塑料袋，它们会抢" },
+  { name:"乐山大佛", province:"四川乐山", season:"春 3-5月 / 秋 9-10月", emoji:"🙏", desc:"山是一尊佛，佛是一座山，三江汇流处的千年凝望。", tip:"坐船从江上看大佛全貌是最佳角度" },
+  { name:"稻城亚丁", province:"四川甘孜", season:"秋 9-10月", emoji:"🏔️", desc:"蓝色星球上的最后一片净土，三座神山守护着人间秘境。", tip:"海拔4000+，提前吃红景天，量力而行" },
+  { name:"都江堰", province:"四川成都", season:"春 3-5月 / 秋 9-10月", emoji:"🌊", desc:"两千多年的水利奇迹，至今仍在灌溉着天府之国。", tip:"一定要听讲解，否则就是看一条河而已" },
+  { name:"丽江古城", province:"云南丽江", season:"全年皆宜", emoji:"🏘️", desc:"雪山下的柔软时光，四方街上纳西古乐悠扬，夜晚的酒吧诉说着故事。", tip:"古城维护费已取消，但玉龙雪山需要提前抢票" },
+  { name:"大理洱海", province:"云南大理", season:"春 3-5月 / 秋 9-10月", emoji:"🛶", desc:"下关风上关花，苍山雪洱海月。骑着电驴环海，风都是甜的。", tip:"租电动车环海是最佳方式，西线比东线更美" },
+  { name:"玉龙雪山", province:"云南丽江", season:"冬 11-3月(雪景) / 夏 6-8月(花海)", emoji:"🏔️", desc:"纳西族的神山，十三座雪峰连绵不绝，蓝月谷的水蓝得惊心。", tip:"大索道票要在早上7点准时抢，手慢无" },
+  { name:"西双版纳", province:"云南", season:"冬 11-2月", emoji:"🌴", desc:"理想而神奇的乐土，热带雨林里的傣家竹楼和星光夜市。", tip:"泼水节（4月中旬）是最热闹的时候，准备好湿身" },
+  { name:"布达拉宫", province:"西藏拉萨", season:"夏 6-8月", emoji:"🏰", desc:"离天堂最近的宫殿，红白两色在高原阳光下熠熠生辉。", tip:"门票需提前一天预约，爬台阶很喘慢慢走" },
+  { name:"黄果树瀑布", province:"贵州安顺", season:"夏 6-8月", emoji:"💦", desc:"亚洲最大瀑布，水帘洞中穿行感受雷霆万钧之势。", tip:"穿雨衣！水帘洞里水雾超级大，相机要保护好" },
+  { name:"千户苗寨", province:"贵州黔东南", season:"春 4-5月 / 秋 9-10月", emoji:"🏘️", desc:"西江千户苗寨，万家灯火点亮山谷的夜晚，像繁星落入凡间。", tip:"观景台看夜景是经典视角，穿苗族服饰拍照很好玩" },
+  { name:"洪崖洞", province:"重庆", season:"春 3-5月 / 秋 9-10月", emoji:"🌃", desc:"现实版的千与千寻，吊脚楼在夜色中灯火辉煌如梦似幻。", tip:"去对面千厮门大桥上拍照，角度比在洪崖洞里好" },
+  { name:"武隆天生三桥", province:"重庆武隆", season:"春 4-5月 / 秋 9-10月", emoji:"🌉", desc:"大自然的鬼斧神工，三座天然石桥横跨峡谷，变形金刚曾在此取景。", tip:"天福官驿是满城尽带黄金甲的取景地" },
+  { name:"大足石刻", province:"重庆大足", season:"春 3-5月 / 秋 9-10月", emoji:"🗿", desc:"刻在崖壁上的唐宋美学，千手观音千眼千手令人叹为观止。", tip:"宝顶山和北山是最精华的两个区域" },
+
+  // ── 华南 ──
+  { name:"桂林漓江", province:"广西桂林", season:"夏 6-8月 / 秋 9-10月", emoji:"🏞️", desc:"桂林山水甲天下，漓江两岸峰林倒映，人在画中游。", tip:"坐竹筏从杨堤到兴坪是最精华的一段，20元背景就在这里" },
+  { name:"阳朔", province:"广西桂林", season:"夏 6-8月 / 秋 9-10月", emoji:"🚲", desc:"桂林山水甲天下，阳朔山水甲桂林。骑行在田园峰林间，自由自在。", tip:"租辆电动车去遇龙河漂流，十里画廊名不虚传" },
+  { name:"三亚", province:"海南", season:"冬 11-3月", emoji:"🏖️", desc:"东方夏威夷，椰风海韵天涯海角，冬天来最舒服。", tip:"春节期间价格翻倍人还多，12月或3月去性价比最高" },
+  { name:"蜈支洲岛", province:"海南三亚", season:"冬 11-3月", emoji:"🤿", desc:"中国的马尔代夫，玻璃海清澈见底，潜水爱好者的天堂。", tip:"岛上吃的比较贵，可以自带干粮和水" },
+  { name:"德天瀑布", province:"广西崇左", season:"夏 6-8月", emoji:"💦", desc:"亚洲第一跨国瀑布，一半在中国一半在越南，气势磅礴。", tip:"坐竹筏可以近距离感受瀑布水雾，对面就是越南" },
+  { name:"丹霞山", province:"广东韶关", season:"春 4-5月 / 秋 9-10月", emoji:"⛰️", desc:"中国红石公园，阳元石和阴元石让大自然的神奇令人莞尔。", tip:"长老峰的日出云海非常壮观，值得早起" },
+  { name:"广州塔", province:"广东广州", season:"全年皆宜", emoji:"🗼", desc:"小蛮腰的纤细身影点缀着珠江夜景，广州的地标名片。", tip:"坐珠江夜游船看广州塔比上塔更有意思" },
+  { name:"福建土楼", province:"福建龙岩/漳州", season:"春 3-5月 / 秋 9-10月", emoji:"🏠", desc:"客家人的圆形城堡，四菜一汤的独特布局，大鱼海棠的原型。", tip:"田螺坑的'四菜一汤'和云水谣是最经典的两处" },
+  { name:"涠洲岛", province:"广西北海", season:"夏 5-8月 / 冬 11-12月", emoji:"🏝️", desc:"中国最年轻的火山岛，碧海蓝天下的火山地貌别具一格。", tip:"骑电动车环岛是最佳方式，岛不大一天就能逛完" },
+  { name:"维多利亚港", province:"香港", season:"秋 10-11月 / 冬 12-2月", emoji:"🌃", desc:"世界三大夜景之一，高楼大厦的灯光秀映在海面上璀璨夺目。", tip:"坐天星小轮从尖沙咀到中环，只要几块钱却能看到百万夜景" },
+  { name:"纳木错", province:"西藏拉萨/那曲", season:"夏 6-8月", emoji:"🌊", desc:"天湖纳木错，西藏三大圣湖之一，念青唐古拉山守护着这片湛蓝。", tip:"海拔4700+，高反严重的慎去，但去了绝对不后悔" },
+  { name:"珠峰大本营", province:"西藏日喀则", season:"春 4-5月 / 秋 9-10月", emoji:"🏔️", desc:"世界之巅就在眼前，仰望珠穆朗玛的日照金山是一生必做的事。", tip:"需要边防证，提前在户籍地办好" },
+  { name:"香格里拉", province:"云南迪庆", season:"春 5-6月 / 秋 9-10月", emoji:"🏔️", desc:"消失的地平线，心中的日月，普达措的秋色让天堂黯然失色。", tip:"松赞林寺被称为小布达拉宫，非常出片" },
+  { name:"悬空寺", province:"山西大同", season:"春 4-5月 / 秋 9-10月", emoji:"🏯", desc:"挂在悬崖峭壁上的千年古寺，李白到此只留下壮观二字。", tip:"限流参观，最好一大早去排队" },
+  { name:"壶口瀑布", province:"山西/陕西交界", season:"夏 7-9月(丰水) / 冬 1-2月(冰瀑)", emoji:"💦", desc:"黄河之水天上来，奔流到海不复回。壶口的咆哮就是中华民族的心跳。", tip:"山西一侧和陕西一侧都可以看，景色略有不同" },
+  { name:"泸沽湖", province:"云南/四川交界", season:"春 4-5月 / 秋 9-10月", emoji:"🛶", desc:"最后的女儿国，摩梭人的走婚桥横跨碧波，水性杨花开满湖面。", tip:"猪槽船游湖是必体验项目，日出时湖面雾气最美" },
+  { name:"虎跳峡", province:"云南迪庆", season:"春 4-5月 / 秋 9-10月", emoji:"🏞️", desc:"世界上最深的峡谷之一，金沙江在此怒吼奔腾气势恢宏。", tip:"徒步虎跳峡是经典路线，分上中下三段，新手走中虎跳即可" },
+  { name:"雅鲁藏布大峡谷", province:"西藏林芝", season:"春 3-4月(桃花) / 秋 10-11月", emoji:"🏔️", desc:"世界第一大峡谷，南迦巴瓦峰的羞女真容和峡谷桃花绝美。", tip:"林芝三月的桃花节远近闻名，雪山桃花简直绝配" },
+  { name:"秦淮河夫子庙", province:"江苏南京", season:"全年皆宜", emoji:"🏮", desc:"六朝金粉地，桨声灯影里的秦淮河，夜泊秦淮近酒家。", tip:"晚上坐画舫游秦淮河，听船娘唱评弹最有味道" },
+  { name:"羊卓雍措", province:"西藏山南", season:"夏 6-8月", emoji:"💎", desc:"羊湖的蓝是上帝调出来的，蜿蜒如珊瑚枝镶嵌在高原之上。", tip:"观景台在岗巴拉山口，最佳拍摄时间上午阳光好" },
 ];
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let clickCount = 0;
+let currentDest = null;
+let isAnimating = false;
+let doorOpen = false;
+const recentIndices = [];
+const MAX_RECENT = 7;
+
+const encouragements = [
+  "世界很大，哪个地方都是一次新的体验 ✨",
+  "也许不是最好的，但一定是最特别的 🌸",
+  "旅行的意义不在目的地，而在路上 🚶",
+  "你已经看了这么多了，不如就选一个出发吧！",
+  "犹豫的时候，第一个往往就是最好的 🎯",
+  "脚步到达不了的地方，心可以先到。但心到了，脚也就快了 🌈",
+];
+
+const blessings = [
+  "愿你一路平安，遇见最美的风景，也遇见最好的自己。",
+  "旅途愉快！记得拍很多照片，吃很多好吃的，然后平安回来。",
+  "去吧！这个世界比你想象的更温柔，也比你想象的更精彩。",
+  "每一段旅程都是一次成长，希望你带着满满的故事回来。",
+  "祝你遇到好天气、好风景、好心人，还有好吃的！",
+  "出发吧！未知的路上，藏着生活给你的惊喜。",
+];
+
+// ═══════════════════════════════════════
+//  DOM REFS
+// ═══════════════════════════════════════
+const doorLeaf = document.getElementById('doorLeaf');
+const destCard = document.getElementById('destCard');
+const btnRandom = document.getElementById('btnRandom');
+const btnConfirm = document.getElementById('btnConfirm');
+const encouragementEl = document.getElementById('encouragement');
+const blessingOverlay = document.getElementById('blessingOverlay');
+const blessingDest = document.getElementById('blessingDest');
+const blessingText = document.getElementById('blessingText');
+
+// ═══════════════════════════════════════
+//  FUNCTIONS
+// ═══════════════════════════════════════
+
+function getRandomDest() {
+  let idx;
+  let tries = 0;
+  do {
+    idx = Math.floor(Math.random() * destinations.length);
+    tries++;
+    if (tries > 100) break; // safety valve
+  } while (recentIndices.includes(idx));
+
+  recentIndices.push(idx);
+  if (recentIndices.length > MAX_RECENT) recentIndices.shift();
+
+  return destinations[idx];
 }
 
-async function startDetect() {
-  const name = input.value.trim();
-  if (!name) {
-    input.classList.add('glitch');
-    setTimeout(() => input.classList.remove('glitch'), 300);
+function updateCard(dest) {
+  document.getElementById('cardEmoji').textContent = dest.emoji;
+  document.getElementById('cardName').textContent = dest.name;
+  document.getElementById('cardProvince').textContent = '📍 ' + dest.province;
+  document.getElementById('cardSeason').textContent = '🕐 最佳季节：' + dest.season;
+  document.getElementById('cardDesc').textContent = dest.desc;
+  document.getElementById('cardTip').textContent = dest.tip;
+  // reset emoji animation
+  const emojiEl = document.getElementById('cardEmoji');
+  emojiEl.style.animation = 'none';
+  emojiEl.offsetHeight; // reflow
+  emojiEl.style.animation = 'emoji-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+}
+
+function spawnSparkles(x, y) {
+  const emojis = ['✨','⭐','💫','🌟','💖','🌸','🎀'];
+  for (let i = 0; i < 8; i++) {
+    const sparkle = document.createElement('span');
+    sparkle.className = 'sparkle';
+    sparkle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    sparkle.style.left = x + 'px';
+    sparkle.style.top = y + 'px';
+    sparkle.style.setProperty('--sx', (Math.random() - 0.5) * 200 + 'px');
+    sparkle.style.setProperty('--sy', (Math.random() - 0.5) * 200 - 40 + 'px');
+    sparkle.style.animationDuration = (0.8 + Math.random() * 1) + 's';
+    document.body.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 1500);
+  }
+}
+
+async function openDoor() {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  clickCount++;
+  const dest = getRandomDest();
+  currentDest = dest;
+
+  // Get button position for sparkles
+  const btnRect = btnRandom.getBoundingClientRect();
+  const sparkX = btnRect.left + btnRect.width / 2;
+  const sparkY = btnRect.top + btnRect.height / 2;
+
+  if (doorOpen) {
+    // Door is open → hide card, close door, then reopen
+    destCard.classList.remove('visible');
+    destCard.classList.add('hiding');
+
+    await sleep(350);
+
+    doorLeaf.classList.add('closing');
+    doorLeaf.classList.remove('open');
+
+    await sleep(600);
+
+    // update card while door is closed
+    updateCard(dest);
+    destCard.classList.remove('hiding');
+
+    doorLeaf.classList.remove('closing');
+    // force reflow
+    doorLeaf.offsetHeight;
+
+    // open door again
+    doorLeaf.classList.add('open');
+
+    await sleep(400);
+
+    destCard.classList.add('visible');
+    spawnSparkles(sparkX, sparkY);
+  } else {
+    // First time → update card, then open door
+    updateCard(dest);
+
+    await sleep(150);
+
+    doorLeaf.classList.add('open');
+
+    await sleep(450);
+
+    destCard.classList.add('visible');
+    doorOpen = true;
+    btnConfirm.style.display = 'inline-block';
+    btnRandom.textContent = '🔄 再换一个';
+  }
+
+  // Show encouragement after 5 clicks
+  if (clickCount >= 5) {
+    const msg = encouragements[Math.floor(Math.random() * encouragements.length)];
+    encouragementEl.textContent = msg;
+    encouragementEl.classList.add('show');
+  }
+
+  isAnimating = false;
+}
+
+function lockItIn() {
+  if (isAnimating || !currentDest) return;
+  isAnimating = true;
+
+  // spawn sparkles everywhere!
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      spawnSparkles(
+        Math.random() * window.innerWidth,
+        Math.random() * window.innerHeight * 0.6
+      );
+    }, i * 300);
+  }
+
+  const blessing = blessings[Math.floor(Math.random() * blessings.length)];
+  blessingDest.textContent = '🏁 ' + currentDest.name + ' · ' + currentDest.province;
+  blessingText.textContent = blessing;
+
+  setTimeout(() => {
+    blessingOverlay.classList.add('show');
+  }, 600);
+
+  isAnimating = false;
+}
+
+function startOver() {
+  blessingOverlay.classList.remove('show');
+  clickCount = 0;
+  currentDest = null;
+  doorOpen = false;
+  recentIndices.length = 0;
+  isAnimating = false;
+
+  doorLeaf.classList.remove('open');
+  destCard.classList.remove('visible', 'hiding');
+  btnConfirm.style.display = 'none';
+  btnRandom.textContent = '✨ 开启穿越';
+  encouragementEl.classList.remove('show');
+  encouragementEl.textContent = '';
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ═══════════════════════════════════════
+//  KEYBOARD SHORTCUT
+// ═══════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (blessingOverlay.classList.contains('show')) {
+    if (e.key === 'Enter' || e.key === ' ') startOver();
     return;
   }
-
-  btn.disabled = true;
-  input.disabled = true;
-  resultArea.innerHTML = '';
-
-  // 检查是否特殊人物
-  const isSpecialA = name === '魏平慧';
-  const isSpecialB = name === '魏乐康';
-
-  // 给某些名字加一点"buff"
-  let scoreModifier = 0;
-  const lower = name.toLowerCase();
-  if (name.length <= 2) scoreModifier += 10;
-  if (name.includes('伟') || name.includes('强') || name.includes('涛')) scoreModifier -= 15;
-  if (name.includes('睿') || name.includes('智') || name.includes('慧')) scoreModifier -= 20;
-  if (lower.includes('sb') || lower.includes('zz')) scoreModifier += 30;
-
-  // 特殊角色专属加载文案
-  const specialLoadingMessages = isSpecialA ? [
-    "正在扫描脑细胞...",
-    "正在连接分析系统...",
-    "⚠️ 检测到异常信号...",
-    "正在重新校准传感器...",
-    "信号强度超出量程...请稍候...",
-    "正在切换备用检测模块...",
-    "⚠️ 数据溢出！正在降噪处理...",
-    "系统负载过高...即将得出结果...",
-  ] : isSpecialB ? [
-    "正在扫描脑细胞...",
-    "正在初始化检测程序...",
-    "🔍 检测到可疑目标...",
-    "正在深度扫描中...",
-    "不对劲...这人不对劲...",
-    "⚠️ 系统检测到恶意干扰...",
-    "防护模块已激活...正在抵抗...",
-    "你到底是谁？！系统正在挣扎...",
-  ] : loadingMessages;
-
-  // 渲染进度条
-  resultArea.innerHTML = `
-    <div class="progress-wrap">
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <div class="status-text" id="statusText">${loadingMessages[0]}</div>
-    </div>
-  `;
-
-  const progressFill = document.getElementById('progressFill');
-  const statusText = document.getElementById('statusText');
-
-  // 模拟进度，5秒左右走完
-  const totalDuration = 5000;
-  const steps = 40;
-  const stepTime = totalDuration / steps;
-
-  for (let i = 0; i <= steps; i++) {
-    const progress = (i / steps) * 100;
-    // 进度条偶尔卡一下、跳一下，显得不那么规律
-    const jittered = progress + (Math.random() - 0.5) * 8;
-    progressFill.style.width = Math.min(100, Math.max(0, jittered)) + '%';
-
-    // 随机换 loading 文案（特殊人物有专属文案，且最后几步固定为尾部文案）
-    if (i >= steps - 3 && (isSpecialA || isSpecialB)) {
-      statusText.textContent = specialLoadingMessages[specialLoadingMessages.length - (steps - i)];
-    } else if (i % 5 === 0 || Math.random() < 0.25) {
-      const pool = isSpecialA || isSpecialB ? specialLoadingMessages.slice(0, -3) : specialLoadingMessages;
-      const msg = pool[Math.floor(Math.random() * pool.length)];
-      statusText.textContent = msg;
-    }
-
-    // 偶尔假装卡住
-    const extraWait = Math.random() < 0.1 ? 200 + Math.random() * 400 : 0;
-    await sleep(stepTime + extraWait);
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    openDoor();
   }
-
-  // 特殊人物：进度条跑完后显示专属结果
-  if (isSpecialA) {
-    resultArea.innerHTML = `
-      <div class="special-msg">
-        ⚠️ 警告 ⚠️<br><br>
-        无法检测智障度<br>
-        已经超出检测范围<br><br>
-        <span style="font-size:12px;color:#f88;">系统建议：放弃治疗</span>
-      </div>
-    `;
-  } else if (isSpecialB) {
-    resultArea.innerHTML = `
-      <div class="special-msg" style="color:#ff0; text-shadow: 0 0 14px #ff0;">
-        ⚡ 你想干什么？ ⚡<br><br>
-        <span style="font-size:12px;color:#ff8;">检测系统遭到不明力量干扰...</span>
-      </div>
-    `;
-  } else {
-  let score;
-  if (Math.random() < 0.05) {
-    // 5% 概率出极端值
-    score = Math.random() < 0.5 ? Math.floor(Math.random() * 5) : Math.floor(95 + Math.random() * 5);
-  } else {
-    // 正态-ish 分布，偏中间
-    score = Math.floor(
-      (Math.random() + Math.random() + Math.random()) / 3 * 100
-    );
+  if ((e.key === 'y' || e.key === 'Y') && doorOpen) {
+    e.preventDefault();
+    lockItIn();
   }
-  score = Math.max(0, Math.min(100, score + scoreModifier));
-
-  // 确定等级和颜色
-  let colorClass, verdictPool;
-  if (score === 0) {
-    colorClass = 'low';
-    verdictPool = verdicts.ultraLow;
-  } else if (score <= 20) {
-    colorClass = 'low';
-    verdictPool = verdicts.low;
-  } else if (score <= 50) {
-    colorClass = 'mid';
-    verdictPool = verdicts.mid;
-  } else if (score < 100) {
-    colorClass = 'high';
-    verdictPool = verdicts.high;
-  } else {
-    colorClass = 'high';
-    verdictPool = verdicts.max;
-  }
-
-  const verdict = verdictPool[Math.floor(Math.random() * verdictPool.length)];
-
-  resultArea.innerHTML = `
-    <div class="result-card">
-      <div class="big-number ${colorClass}">${score}%</div>
-      <div class="status-text" style="animation:none;font-size:11px;color:#0a0;">智障指数：${'★'.repeat(Math.ceil(score / 20))}${'☆'.repeat(5 - Math.ceil(score / 20))}</div>
-      <div class="verdict">${verdict}</div>
-      <div style="margin-top:10px;font-size:10px;color:#062;">检测对象：${escapeHtml(name)} | 可信度：${(85 + Math.random() * 15).toFixed(1)}%</div>
-    </div>
-  `;
-  }
-
-  btn.disabled = false;
-  input.disabled = false;
-  input.value = '';
-  input.focus();
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// 回车触发检测
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter') startDetect();
 });
 </script>
 </body>
