@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智障检测系统 v6.6.6</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #0f0;
+    font-family: "Courier New", monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  /* 背景闪烁的假终端效果 */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.15) 0px,
+      rgba(0,0,0,0.15) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .container {
+    background: #111;
+    border: 2px solid #0f0;
+    border-radius: 8px;
+    padding: 40px 30px;
+    width: 460px;
+    max-width: 95vw;
+    box-shadow: 0 0 40px rgba(0,255,0,0.15), inset 0 0 20px rgba(0,255,0,0.05);
+    position: relative;
+    z-index: 1;
+  }
+
+  .scanline {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(0,255,0,0.3);
+    animation: scan 3s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 10px #0f0;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 11px;
+    color: #0a0;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  input {
+    flex: 1;
+    background: #000;
+    border: 1px solid #0f0;
+    color: #0f0;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 16px;
+    outline: none;
+    border-radius: 4px;
+  }
+
+  input:focus {
+    box-shadow: 0 0 12px rgba(0,255,0,0.3);
+  }
+
+  input::placeholder {
+    color: #063;
+  }
+
+  button {
+    background: #0f0;
+    color: #000;
+    border: none;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  button:hover {
+    background: #0c0;
+    box-shadow: 0 0 16px #0f0;
+  }
+
+  button:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .result-area {
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .progress-wrap {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 24px;
+    background: #000;
+    border: 1px solid #0f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #0f0, #ff0, #f00);
+    transition: width 0.08s linear;
+    border-radius: 2px;
+  }
+
+  .status-text {
+    font-size: 13px;
+    color: #0a0;
+    margin-top: 6px;
+    min-height: 18px;
+    animation: blink 0.8s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .result-card {
+    text-align: center;
+    padding: 20px;
+    border: 1px dashed #0f0;
+    border-radius: 6px;
+    background: rgba(0,255,0,0.03);
+    width: 100%;
+  }
+
+  .big-number {
+    font-size: 64px;
+    font-weight: bold;
+    text-shadow: 0 0 20px #f00;
+    line-height: 1;
+  }
+
+  .big-number.high { color: #f33; text-shadow: 0 0 24px #f00; }
+  .big-number.mid { color: #ff3; text-shadow: 0 0 24px #ff0; }
+  .big-number.low { color: #3f3; text-shadow: 0 0 24px #0f0; }
+
+  .verdict {
+    font-size: 14px;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    color: #0a0;
+  }
+
+  .special-msg {
+    font-size: 20px;
+    color: #f55;
+    text-shadow: 0 0 14px #f00;
+    text-align: center;
+    letter-spacing: 2px;
+    line-height: 1.6;
+  }
+
+  .glitch {
+    animation: glitch 0.3s ease-in-out;
+  }
+
+  @keyframes glitch {
+    0%   { transform: translate(0); }
+    20%  { transform: translate(-3px, 2px); }
+    40%  { transform: translate(3px, -2px); }
+    60%  { transform: translate(-2px, -1px); }
+    80%  { transform: translate(2px, 1px); }
+    100% { transform: translate(0); }
+  }
+
+  .footer {
+    text-align: center;
+    font-size: 8px;
+    color: #063;
+    margin-top: 24px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="scanline"></div>
+
+  <h1>🧠 智障检测系统</h1>
+  <div class="subtitle">INTELLIGENCE DEFECT DETECTOR v6.6.6</div>
+
+  <div class="input-group">
+    <input type="text" id="nameInput" placeholder="请输入受检者姓名..." autofocus>
+    <button id="detectBtn" onclick="startDetect()">检 测</button>
+  </div>
+
+  <div class="result-area" id="resultArea"></div>
+
+  <div class="footer">
+    ※ 本系统已通过ISO-250权威认证 | 准确率高达 102.7% | 检测结果不接受反驳
+  </div>
+</div>
+
+<script>
+const input = document.getElementById('nameInput');
+const btn = document.getElementById('detectBtn');
+const resultArea = document.getElementById('resultArea');
+
+// 智障评语库
+const verdicts = {
+  ultraLow: [
+    "恭喜！你的智障度极低，基本属于正常人范畴。",
+    "检测结果令人欣慰，你大概是个假智障。",
+    "不可思议！你居然是个正常人，系统表示很失望。",
+    "智障指数极低，建议你换个圈子混。",
+  ],
+  low: [
+    "轻微智障，偶尔犯傻，尚可抢救。",
+    "智障度偏高一点点，但还不是没救。",
+    "属于'间歇性智障'，发作频率：每天三次。",
+    "轻度智障，建议少刷短视频。",
+  ],
+  mid: [
+    "中度智障，走在路上会被猫鄙视的那种。",
+    "智障程度令人担忧，建议随身携带脑残片。",
+    "你的智力水平相当于一块受潮的饼干。",
+    "中度智障，说话前请三思，虽然你也想不明白。",
+  ],
+  high: [
+    "重度智障！！！你的脑子大概忘在娘胎里了。",
+    "检测仪差点爆表，你刷新了本系统的最低纪录。",
+    "恭喜打破智障榜单纪录！前无古人后无来者。",
+    "严重智障，建议立刻停止思考，你的神经元在集体辞职。",
+  ],
+  max: [
+    "你的智障度已经突破天际，系统建议你重新投胎。",
+    "100% 纯天然无添加智障！世界奇观级别。",
+    "爆表了爆表了！！检测仪冒烟了，你赔我设备！",
+    "这是人类吗？系统怀疑你是一根萝卜伪装成的。",
+  ],
+};
+
+const loadingMessages = [
+  "正在扫描脑细胞...",
+  "正在连接人工智能智障分析云...",
+  "正在分析智商残留量...",
+  "正在对比全球智障数据库...",
+  "正在解码神经元放电模式...",
+  "正在排除'故意装傻'干扰项...",
+  "正在计算脑回路短路概率...",
+  "结果马上出来，别急，越急越智障...",
+];
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function startDetect() {
+  const name = input.value.trim();
+  if (!name) {
+    input.classList.add('glitch');
+    setTimeout(() => input.classList.remove('glitch'), 300);
+    return;
+  }
+
+  btn.disabled = true;
+  input.disabled = true;
+  resultArea.innerHTML = '';
+
+  // 检查是否特殊人物
+  const isSpecialA = name === '魏平慧';
+  const isSpecialB = name === '魏乐康';
+
+  // 给某些名字加一点"buff"
+  let scoreModifier = 0;
+  const lower = name.toLowerCase();
+  if (name.length <= 2) scoreModifier += 10;
+  if (name.includes('伟') || name.includes('强') || name.includes('涛')) scoreModifier -= 15;
+  if (name.includes('睿') || name.includes('智') || name.includes('慧')) scoreModifier -= 20;
+  if (lower.includes('sb') || lower.includes('zz')) scoreModifier += 30;
+
+  // 特殊角色专属加载文案
+  const specialLoadingMessages = isSpecialA ? [
+    "正在扫描脑细胞...",
+    "正在连接分析系统...",
+    "⚠️ 检测到异常信号...",
+    "正在重新校准传感器...",
+    "信号强度超出量程...请稍候...",
+    "正在切换备用检测模块...",
+    "⚠️ 数据溢出！正在降噪处理...",
+    "系统负载过高...即将得出结果...",
+  ] : isSpecialB ? [
+    "正在扫描脑细胞...",
+    "正在初始化检测程序...",
+    "🔍 检测到可疑目标...",
+    "正在深度扫描中...",
+    "不对劲...这人不对劲...",
+    "⚠️ 系统检测到恶意干扰...",
+    "防护模块已激活...正在抵抗...",
+    "你到底是谁？！系统正在挣扎...",
+  ] : loadingMessages;
+
+  // 渲染进度条
+  resultArea.innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="status-text" id="statusText">${loadingMessages[0]}</div>
+    </div>
+  `;
+
+  const progressFill = document.getElementById('progressFill');
+  const statusText = document.getElementById('statusText');
+
+  // 模拟进度，5秒左右走完
+  const totalDuration = 5000;
+  const steps = 40;
+  const stepTime = totalDuration / steps;
+
+  for (let i = 0; i <= steps; i++) {
+    const progress = (i / steps) * 100;
+    // 进度条偶尔卡一下、跳一下，显得不那么规律
+    const jittered = progress + (Math.random() - 0.5) * 8;
+    progressFill.style.width = Math.min(100, Math.max(0, jittered)) + '%';
+
+    // 随机换 loading 文案（特殊人物有专属文案，且最后几步固定为尾部文案）
+    if (i >= steps - 3 && (isSpecialA || isSpecialB)) {
+      statusText.textContent = specialLoadingMessages[specialLoadingMessages.length - (steps - i)];
+    } else if (i % 5 === 0 || Math.random() < 0.25) {
+      const pool = isSpecialA || isSpecialB ? specialLoadingMessages.slice(0, -3) : specialLoadingMessages;
+      const msg = pool[Math.floor(Math.random() * pool.length)];
+      statusText.textContent = msg;
+    }
+
+    // 偶尔假装卡住
+    const extraWait = Math.random() < 0.1 ? 200 + Math.random() * 400 : 0;
+    await sleep(stepTime + extraWait);
+  }
+
+  // 特殊人物：进度条跑完后显示专属结果
+  if (isSpecialA) {
+    resultArea.innerHTML = `
+      <div class="special-msg">
+        ⚠️ 警告 ⚠️<br><br>
+        无法检测智障度<br>
+        已经超出检测范围<br><br>
+        <span style="font-size:12px;color:#f88;">系统建议：放弃治疗</span>
+      </div>
+    `;
+  } else if (isSpecialB) {
+    resultArea.innerHTML = `
+      <div class="special-msg" style="color:#ff0; text-shadow: 0 0 14px #ff0;">
+        ⚡ 你想干什么？ ⚡<br><br>
+        <span style="font-size:12px;color:#ff8;">检测系统遭到不明力量干扰...</span>
+      </div>
+    `;
+  } else {
+  let score;
+  if (Math.random() < 0.05) {
+    // 5% 概率出极端值
+    score = Math.random() < 0.5 ? Math.floor(Math.random() * 5) : Math.floor(95 + Math.random() * 5);
+  } else {
+    // 正态-ish 分布，偏中间
+    score = Math.floor(
+      (Math.random() + Math.random() + Math.random()) / 3 * 100
+    );
+  }
+  score = Math.max(0, Math.min(100, score + scoreModifier));
+
+  // 确定等级和颜色
+  let colorClass, verdictPool;
+  if (score === 0) {
+    colorClass = 'low';
+    verdictPool = verdicts.ultraLow;
+  } else if (score <= 20) {
+    colorClass = 'low';
+    verdictPool = verdicts.low;
+  } else if (score <= 50) {
+    colorClass = 'mid';
+    verdictPool = verdicts.mid;
+  } else if (score < 100) {
+    colorClass = 'high';
+    verdictPool = verdicts.high;
+  } else {
+    colorClass = 'high';
+    verdictPool = verdicts.max;
+  }
+
+  const verdict = verdictPool[Math.floor(Math.random() * verdictPool.length)];
+
+  resultArea.innerHTML = `
+    <div class="result-card">
+      <div class="big-number ${colorClass}">${score}%</div>
+      <div class="status-text" style="animation:none;font-size:11px;color:#0a0;">智障指数：${'★'.repeat(Math.ceil(score / 20))}${'☆'.repeat(5 - Math.ceil(score / 20))}</div>
+      <div class="verdict">${verdict}</div>
+      <div style="margin-top:10px;font-size:10px;color:#062;">检测对象：${escapeHtml(name)} | 可信度：${(85 + Math.random() * 15).toFixed(1)}%</div>
+    </div>
+  `;
+  }
+
+  btn.disabled = false;
+  input.disabled = false;
+  input.value = '';
+  input.focus();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// 回车触发检测
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') startDetect();
+});
+</script>
+</body>
+</html>
