@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0c0c14;
+  --bg-card: #111118;
+  --text: #e4e4e7;
+  --text-dim: #71717a;
+  --text-faint: #3f3f46;
+  --border: #1e1e2e;
+  --accent: #a78bfa;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Inter', sans-serif;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(168, 139, 250, 0.3);
+  color: #fff;
+}

@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const posts = [
+  {
+    href: '/blog/css-theme-switch',
+    title: '用纯 CSS 实现一个丝滑的主题切换',
+    date: '2026.05.28',
+    tag: 'CSS',
+    tagColor: '#c084fc',
+    read: '3 分钟',
+  },
+  {
+    href: '/blog/tanstack-query',
+    title: '为什么我放弃 useEffect 改用 TanStack Query',
+    date: '2026.05.15',
+    tag: 'React',
+    tagColor: '#60a5fa',
+    read: '7 分钟',
+  },
+  {
+    href: '/blog/vim-half-year',
+    title: 'Vim 入坑半年：我的配置与心得',
+    date: '2026.04.30',
+    tag: '工具',
+    tagColor: '#fbbf24',
+    read: '5 分钟',
+  },
+  {
+    href: '/blog/typescript-gymnastics',
+    title: 'TypeScript 类型体操：从入门到放弃再到入门',
+    date: '2026.04.12',
+    tag: 'TypeScript',
+    tagColor: '#34d399',
+    read: '9 分钟',
+  },
+  {
+    href: '/blog/css-grid-notes',
+    title: 'CSS Grid 实战笔记',
+    date: '2026.03.20',
+    tag: 'CSS',
+    tagColor: '#f472b6',
+    read: '4 分钟',
+  },
+];
+
+// 按标签筛选参数
+const tag = Astro.url.searchParams.get('tag');
+const filteredPosts = tag ? posts.filter((p) => p.tag === tag) : posts;
+const allTags = [...new Set(posts.map((p) => p.tag))];
+---
+
+<BaseLayout title="Blog" description="魏乐康的博客文章">
+  <div class="mb-16">
+    <h1 class="font-serif text-5xl md:text-6xl font-bold text-white tracking-tight leading-tight mb-3" style="text-shadow: 0 0 80px rgba(168,139,250,0.25);">
+      Blog
+    </h1>
+    <p class="text-base text-text-dim font-light">写点学到的、想到的、踩过的坑。</p>
+  </div>
+
+  <!-- 标签筛选 -->
+  <div class="flex gap-2 flex-wrap mb-10">
+    <a
+      href="/blog"
+      class={`text-xs font-medium px-4 py-1.5 rounded-full no-underline transition-all ${
+        !tag ? 'bg-white text-bg' : 'bg-bg-card text-text-dim hover:text-white border border-border'
+      }`}
+    >
+      全部
+    </a>
+    {
+      allTags.map((t) => (
+        <a
+          href={`/blog?tag=${t}`}
+          class={`text-xs font-medium px-4 py-1.5 rounded-full no-underline transition-all border ${
+            tag === t
+              ? 'bg-white text-bg border-white'
+              : 'bg-bg-card text-text-dim hover:text-white border-border'
+          }`}
+        >
+          {t}
+        </a>
+      ))
+    }
+  </div>
+
+  <!-- 文章列表 -->
+  {
+    filteredPosts.length === 0 ? (
+      <p class="text-text-dim text-sm">没有符合标签「{tag}」的文章。</p>
+    ) : (
+      <ul class="list-none">
+        {filteredPosts.map((post) => (
+          <li class="border-b border-white/5">
+            <a
+              href={post.href}
+              class="flex items-baseline gap-3.5 py-4 no-underline text-text hover:text-white transition-all hover:pl-2"
+            >
+              <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={`background:${post.tagColor}`}></span>
+              <div>
+                <div class="text-[17px] font-medium mb-0.5">{post.title}</div>
+                <div class="text-xs text-text-dim flex gap-3.5">
+                  <span>{post.date}</span>
+                  <span class="font-mono text-[10px] tracking-wider" style={`color:${post.tagColor}`}>{post.tag}</span>
+                  <span>{post.read}</span>
+                </div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</BaseLayout>

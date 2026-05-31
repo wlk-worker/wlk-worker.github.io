@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="关于" description="魏乐康 — 业余学习者">
+  <!-- 名字区 -->
+  <div class="mb-16">
+    <h1 class="font-serif text-5xl md:text-6xl font-bold text-white tracking-tight leading-tight mb-3" style="text-shadow: 0 0 80px rgba(168,139,250,0.25);">
+      魏乐康
+    </h1>
+    <p class="text-base text-text-dim font-light leading-relaxed">
+      业余学习者。写代码，学前端，偶尔做点小东西。<br />
+      关注简洁的设计和好用的工具。
+    </p>
+  </div>
+
+  <!-- 最近文章 -->
+  <div class="mb-12">
+    <h2 class="text-[11px] text-text-faint tracking-[0.1em] uppercase font-medium mb-5">✦ 最近文章</h2>
+    <ul class="list-none">
+      <li class="border-b border-white/5">
+        <a href="/blog/css-theme-switch" class="flex items-baseline gap-3.5 py-4 no-underline text-text hover:text-white transition-all hover:pl-2">
+          <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#c084fc"></span>
+          <div>
+            <div class="text-[17px] font-medium mb-0.5">用纯 CSS 实现一个丝滑的主题切换</div>
+            <div class="text-xs text-text-dim flex gap-3.5">
+              <span>2026.05.28</span>
+              <span class="font-mono text-[10px] tracking-wider" style="color:#c084fc">CSS</span>
+              <span>3 分钟</span>
+            </div>
+          </div>
+        </a>
+      </li>
+      <li class="border-b border-white/5">
+        <a href="/blog/tanstack-query" class="flex items-baseline gap-3.5 py-4 no-underline text-text hover:text-white transition-all hover:pl-2">
+          <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#60a5fa"></span>
+          <div>
+            <div class="text-[17px] font-medium mb-0.5">为什么我放弃 useEffect 改用 TanStack Query</div>
+            <div class="text-xs text-text-dim flex gap-3.5">
+              <span>2026.05.15</span>
+              <span class="font-mono text-[10px] tracking-wider" style="color:#60a5fa">React</span>
+              <span>7 分钟</span>
+            </div>
+          </div>
+        </a>
+      </li>
+      <li class="border-b border-white/5">
+        <a href="/blog/vim-half-year" class="flex items-baseline gap-3.5 py-4 no-underline text-text hover:text-white transition-all hover:pl-2">
+          <span class="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style="background:#fbbf24"></span>
+          <div>
+            <div class="text-[17px] font-medium mb-0.5">Vim 入坑半年：我的配置与心得</div>
+            <div class="text-xs text-text-dim flex gap-3.5">
+              <span>2026.04.30</span>
+              <span class="font-mono text-[10px] tracking-wider" style="color:#fbbf24">工具</span>
+              <span>5 分钟</span>
+            </div>
+          </div>
+        </a>
+      </li>
+    </ul>
+    <a href="/blog" class="inline-flex items-center gap-1.5 mt-6 text-[13px] text-text-dim no-underline hover:text-white transition-colors">
+      浏览所有文章 →
+    </a>
+  </div>
+
+  <!-- 其他模块入口 -->
+  <div class="grid grid-cols-2 gap-4">
+    <a href="/projects" class="block p-5 rounded-xl bg-bg-card border border-border no-underline hover:border-accent/30 transition-all">
+      <div class="text-lg mb-1">🛠</div>
+      <div class="text-[15px] font-medium text-white mb-1">项目</div>
+      <div class="text-xs text-text-dim">做过的和正在做的东西</div>
+    </a>
+    <a href="/games" class="block p-5 rounded-xl bg-bg-card border border-border no-underline hover:border-accent/30 transition-all">
+      <div class="text-lg mb-1">🎮</div>
+      <div class="text-[15px] font-medium text-white mb-1">游戏</div>
+      <div class="text-xs text-text-dim">一些小游戏</div>
+    </a>
+  </div>
+</BaseLayout>

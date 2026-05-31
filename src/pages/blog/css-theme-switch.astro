@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="用纯 CSS 实现一个丝滑的主题切换" description="不需要 JavaScript，用 CSS 自定义属性和 :has() 选择器就能做主题切换。">
+  <article>
+    <!-- 返回 -->
+    <a href="/blog" class="text-xs text-text-dim no-underline hover:text-white transition-colors inline-block mb-8">← 返回 Blog</a>
+
+    <!-- 标签 -->
+    <div class="flex gap-2 mb-5">
+      <span class="font-mono text-[11px] px-3.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">CSS</span>
+      <span class="font-mono text-[11px] px-3.5 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">前端</span>
+    </div>
+
+    <!-- 标题 -->
+    <h2 class="font-serif text-3xl md:text-4xl font-bold text-white leading-snug mb-3 tracking-tight">
+      用纯 CSS 实现一个丝滑的主题切换
+    </h2>
+    <div class="font-mono text-[13px] text-text-dim mb-12">2026 年 5 月 28 日</div>
+
+    <!-- 正文 -->
+    <div class="text-base text-[#d4d4d8] leading-relaxed space-y-6">
+      <p>浏览器原生能力在 2026 年已经足够强大。不需要 JavaScript，只用 CSS 自定义属性和 <code class="bg-white/5 px-1.5 py-0.5 rounded font-mono text-[13px] text-[#fbbf24]">:has()</code> 选择器，就能做出漂亮的明暗主题切换——而且过渡动画是丝滑的。</p>
+
+      <h3 class="font-serif text-2xl font-semibold text-white mt-12 mb-4">核心思路</h3>
+      <p>把主题状态存在一个 CSS 自定义属性里，用 <code class="bg-white/5 px-1.5 py-0.5 rounded font-mono text-[13px] text-[#fbbf24]">:has()</code> 选择器让任意子元素响应这个状态变化。配合 <code class="bg-white/5 px-1.5 py-0.5 rounded font-mono text-[13px] text-[#fbbf24]">light-dark()</code> 函数自动切换色值。</p>
+
+      <pre class="bg-[#0a0a12] border border-border rounded-[10px] p-5 md:p-6 overflow-x-auto"><code class="font-mono text-[13px] text-[#e4e4e7] leading-[1.8]"><span style="color:#7dd3fc">:root</span> {
+  <span style="color:#a78bfa">--theme</span>: <span style="color:#fbbf24">dark</span>;
+  <span style="color:#a78bfa">color-scheme</span>: <span style="color:#60a5fa">var</span>(<span style="color:#a78bfa">--theme</span>);
+}
+
+<span style="color:#7dd3fc">body</span> {
+  <span style="color:#a78bfa">background</span>: <span style="color:#60a5fa">light-dark</span>(<span style="color:#34d399">#faf8f3</span>, <span style="color:#34d399">#0c0c14</span>);
+  <span style="color:#a78bfa">color</span>:      <span style="color:#60a5fa">light-dark</span>(<span style="color:#34d399">#3d3226</span>, <span style="color:#34d399">#e4e4e7</span>);
+}</code></pre>
+
+      <h3 class="font-serif text-2xl font-semibold text-white mt-12 mb-4">切换按钮</h3>
+      <p>一个 checkbox，配上一个漂亮的开关样式。<code class="bg-white/5 px-1.5 py-0.5 rounded font-mono text-[13px] text-[#fbbf24]">:has()</code> 检测勾选状态，全局主题立马切换。整个过程零 JavaScript。</p>
+
+      <pre class="bg-[#0a0a12] border border-border rounded-[10px] p-5 md:p-6 overflow-x-auto"><code class="font-mono text-[13px] text-[#e4e4e7] leading-[1.8]"><span style="color:#94a3b8">&lt;!-- 这一行就能切换主题 --&gt;</span>
+&lt;<span style="color:#7dd3fc">input</span> <span style="color:#a78bfa">type</span>=<span style="color:#34d399">"checkbox"</span> <span style="color:#a78bfa">class</span>=<span style="color:#34d399">"theme-toggle"</span>&gt;
+
+<span style="color:#94a3b8">/* 当 checkbox 被勾选，:root 上的 --theme 切换为 light */</span>
+<span style="color:#7dd3fc">:root:has(.theme-toggle:checked)</span> {
+  <span style="color:#a78bfa">--theme</span>: <span style="color:#fbbf24">light</span>;
+}</code></pre>
+
+      <h3 class="font-serif text-2xl font-semibold text-white mt-12 mb-4">过渡动画</h3>
+      <p>加上 <code class="bg-white/5 px-1.5 py-0.5 rounded font-mono text-[13px] text-[#fbbf24]">transition</code> 让颜色平滑过渡。0.3 秒的 ease，切换时背景和文字渐变，体验丝滑。</p>
+
+      <p>最终效果：一个纯 CSS 的主题切换，不到 50 行代码，性能完美，可访问性无懈可击。这就是 2026 年前端的美妙之处——平台本身已经给了你足够多的东西。</p>
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-border">
+      <a href="/blog" class="text-xs text-text-dim no-underline hover:text-white transition-colors">← 返回 Blog</a>
+    </div>
+  </article>
+</BaseLayout>
